@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vorapulse"
+version = "0.1.0"
+description = "Python and Flask client for the VoraPulse API."
+requires-python = ">=3.9"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Sabba Sistemas" }
+]
+keywords = ["vorapulse", "pulse", "flask", "email", "automation"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
