@@ -16,6 +16,8 @@ from .exceptions import (
 
 
 class PulseClient:
+    SDK_USER_AGENT = "vorapulse/0.1.0"
+
     def __init__(self, base_url: str, api_token: str, *, timeout: int = 30):
         self.base_url = self._normalize_base_url(base_url)
         self.api_token = str(api_token or "").strip()
@@ -64,6 +66,7 @@ class PulseClient:
         req = request.Request(url, method=method.upper(), data=body)
         req.add_header("Accept", "application/json")
         req.add_header("Authorization", f"Bearer {self.api_token}")
+        req.add_header("User-Agent", self.SDK_USER_AGENT)
 
         if body is not None:
             req.add_header("Content-Type", "application/json")
@@ -198,8 +201,8 @@ class ComposerService(BaseService):
     def autosave(self, payload: dict[str, Any]):
         return self.client.post("composer/autosave", payload)
 
-    def latest_revision(self, query: dict[str, Any]):
-        return self.client.get("composer/revision", query)
+    def latest_revision(self, query: dict[str, Any] | None = None):
+        return self.client.get("composer/revision", query or {})
 
 
 class CampaignService(BaseService):
@@ -235,11 +238,26 @@ class AudienceService(BaseService):
     def delete(self, audience_id: int | str):
         return self.client.delete(f"audiences/{audience_id}")
 
+    def channels(self, query: dict[str, Any] | None = None):
+        return self.client.get("audience/channels", query or {})
+
     def members(self, query: dict[str, Any] | None = None):
         return self.client.get("audience/members", query or {})
 
     def create_member(self, payload: dict[str, Any]):
         return self.client.post("audience/members", payload)
+
+    def member(self, member_id: int | str):
+        return self.client.get(f"audience/members/{member_id}")
+
+    def update_member(self, member_id: int | str, payload: dict[str, Any]):
+        return self.client.patch(f"audience/members/{member_id}", payload)
+
+    def delete_member(self, member_id: int | str):
+        return self.client.delete(f"audience/members/{member_id}")
+
+    def transition_member(self, member_id: int | str, payload: dict[str, Any]):
+        return self.client.post(f"audience/members/{member_id}/transition", payload)
 
     def tags(self, query: dict[str, Any] | None = None):
         return self.client.get("audience/tags", query or {})
