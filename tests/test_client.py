@@ -56,7 +56,7 @@ class PulseClientTest(unittest.TestCase):
         self.assertEqual(captured["url"], "https://pulse.test/api/v2/emails/send-sync")
         self.assertEqual(captured["method"], "POST")
         self.assertEqual(captured["headers"]["Authorization"], "Bearer token")
-        self.assertEqual(captured["headers"]["User-agent"], "vorapulse/0.1.0")
+        self.assertEqual(captured["headers"]["User-agent"], "vorapulse/0.1.2")
         self.assertEqual(captured["body"]["subject"], "Hello")
         self.assertEqual(captured["timeout"], 12)
 
@@ -121,6 +121,41 @@ class PulseClientTest(unittest.TestCase):
         self.assertEqual(captured["method"], "POST")
         self.assertEqual(captured["headers"]["Authorization"], "Bearer legacy-token")
         self.assertEqual(captured["body"], {"status": "qualified"})
+
+    def test_supports_contacts_crud_endpoints(self):
+        captured_calls = []
+
+        def fake_urlopen(req, timeout):
+            captured_calls.append({
+                "url": req.full_url,
+                "method": req.get_method(),
+                "body": None if req.data is None else json.loads(req.data.decode("utf-8")),
+            })
+            return FakeResponse(200, {"success": True})
+
+        with patch("urllib.request.urlopen", fake_urlopen):
+            client = PulseClient("https://pulse.test", "token")
+            client.contacts.list({"page": 2})
+            client.contacts.create({"email": "lead@example.com"})
+            client.contacts.show(18)
+            client.contacts.update(18, {"name": "Lead"})
+            client.contacts.replace(18, {"email": "lead@example.com", "name": "Lead"})
+            client.contacts.delete(18)
+
+        self.assertEqual(
+            [call["method"] for call in captured_calls],
+            ["GET", "POST", "GET", "PATCH", "PUT", "DELETE"],
+        )
+        self.assertEqual(captured_calls[0]["url"], "https://pulse.test/api/v2/contacts?page=2")
+        self.assertEqual(captured_calls[1]["url"], "https://pulse.test/api/v2/contacts")
+        self.assertEqual(captured_calls[2]["url"], "https://pulse.test/api/v2/contacts/18")
+        self.assertEqual(captured_calls[3]["url"], "https://pulse.test/api/v2/contacts/18")
+        self.assertEqual(captured_calls[4]["url"], "https://pulse.test/api/v2/contacts/18")
+        self.assertEqual(captured_calls[5]["url"], "https://pulse.test/api/v2/contacts/18")
+        self.assertEqual(captured_calls[1]["body"], {"email": "lead@example.com"})
+        self.assertEqual(captured_calls[3]["body"], {"name": "Lead"})
+        self.assertEqual(captured_calls[4]["body"], {"email": "lead@example.com", "name": "Lead"})
+        self.assertIsNone(captured_calls[5]["body"])
 
     def test_maps_validation_errors(self):
         def fake_urlopen(req, timeout):

@@ -84,6 +84,7 @@ PULSE_VORA_TIMEOUT=30
 - `composer`
 - `campaigns`
 - `audiences`
+- `contacts`
 - `automations`
 - `calendar`
 - `whatsapp`

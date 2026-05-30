@@ -16,7 +16,7 @@ from .exceptions import (
 
 
 class PulseClient:
-    SDK_USER_AGENT = "vorapulse/0.1.0"
+    SDK_USER_AGENT = "vorapulse/0.1.2"
 
     def __init__(self, base_url: str, api_token: str, *, timeout: int = 30):
         self.base_url = self._normalize_base_url(base_url)
@@ -27,6 +27,7 @@ class PulseClient:
         self.composer = ComposerService(self)
         self.campaigns = CampaignService(self)
         self.audiences = AudienceService(self)
+        self.contacts = ContactService(self)
         self.automations = AutomationService(self)
         self.calendar = CalendarService(self)
         self.whatsapp = WhatsAppService(self)
@@ -264,6 +265,26 @@ class AudienceService(BaseService):
 
     def segments(self, query: dict[str, Any] | None = None):
         return self.client.get("audience/segments", query or {})
+
+
+class ContactService(BaseService):
+    def list(self, query: dict[str, Any] | None = None):
+        return self.client.get("contacts", query or {})
+
+    def create(self, payload: dict[str, Any]):
+        return self.client.post("contacts", payload)
+
+    def show(self, contact_id: int | str):
+        return self.client.get(f"contacts/{contact_id}")
+
+    def update(self, contact_id: int | str, payload: dict[str, Any]):
+        return self.client.patch(f"contacts/{contact_id}", payload)
+
+    def replace(self, contact_id: int | str, payload: dict[str, Any]):
+        return self.client.put(f"contacts/{contact_id}", payload)
+
+    def delete(self, contact_id: int | str):
+        return self.client.delete(f"contacts/{contact_id}")
 
 
 class AutomationService(BaseService):
